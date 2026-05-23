@@ -100,6 +100,10 @@ export class SceneRenderer {
         if (child.isMesh) {
           child.geometry?.dispose();
           child.material?.dispose();
+          if (child.material?.map) child.material.map.dispose();
+        }
+        if (child.isLight) {
+          child.dispose?.();
         }
       });
     }

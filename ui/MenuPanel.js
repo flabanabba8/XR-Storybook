@@ -1,51 +1,39 @@
 import * as THREE from 'three';
-import { Text } from 'troika-three-text';
+import { createTextMesh } from './TextMesh.js';
 
 export class MenuPanel extends THREE.Group {
-  constructor(onSelectStory) {
+  constructor() {
     super();
-    this.onSelectStory = onSelectStory;
-    this.cards = [];
     this.position.set(0, 1.4, -2);
   }
 
   buildMenu(storyList) {
-    // Clear existing cards
     this.clearMenu();
 
     // Title
-    const title = new Text();
-    title.text = 'XR Storybook';
-    title.fontSize = 0.06;
-    title.color = 0xccddff;
-    title.anchorX = 'center';
-    title.anchorY = 'top';
+    const title = createTextMesh('XR Storybook', {
+      fontSize: 48, color: '#ccddff', maxWidth: 500, meshWidth: 0.8, align: 'center'
+    });
     title.position.set(0, 0.4, 0);
-    title.sync();
     this.add(title);
 
     // Subtitle
-    const subtitle = new Text();
-    subtitle.text = 'Pinch a story to begin';
-    subtitle.fontSize = 0.025;
-    subtitle.color = 0x667799;
-    subtitle.anchorX = 'center';
-    subtitle.anchorY = 'top';
-    subtitle.position.set(0, 0.3, 0);
-    subtitle.sync();
+    const subtitle = createTextMesh('Pinch a story to begin  (or click in browser)', {
+      fontSize: 20, color: '#667799', maxWidth: 500, meshWidth: 0.8, align: 'center'
+    });
+    subtitle.position.set(0, 0.28, 0);
     this.add(subtitle);
 
     // Story cards
-    const cardWidth = 0.8;
-    const cardHeight = 0.2;
-    const spacing = 0.05;
-    const startY = 0.15;
+    const cardWidth = 0.9;
+    const cardHeight = 0.18;
+    const spacing = 0.06;
+    const startY = 0.12;
 
     storyList.forEach((story, index) => {
       const card = this.createCard(story, cardWidth, cardHeight);
       card.position.set(0, startY - index * (cardHeight + spacing), 0);
       this.add(card);
-      this.cards.push({ group: card, storyId: story.id });
     });
 
     this.visible = true;
@@ -63,40 +51,28 @@ export class MenuPanel extends THREE.Group {
       opacity: 0.9,
       side: THREE.DoubleSide
     });
-    const bg = new THREE.Mesh(bgGeo, bgMat);
-    group.add(bg);
+    group.add(new THREE.Mesh(bgGeo, bgMat));
 
     // Title
-    const titleText = new Text();
-    titleText.text = story.title;
-    titleText.fontSize = 0.03;
-    titleText.color = 0xeeeeff;
-    titleText.anchorX = 'left';
-    titleText.anchorY = 'top';
-    titleText.position.set(-width / 2 + 0.04, height / 2 - 0.03, 0.01);
-    titleText.sync();
-    group.add(titleText);
+    const titleMesh = createTextMesh(story.title, {
+      fontSize: 24, color: '#eeeeff', maxWidth: 400, meshWidth: 0.6
+    });
+    titleMesh.position.set(-0.1, 0.04, 0.01);
+    group.add(titleMesh);
 
     // Description
-    const descText = new Text();
-    descText.text = story.description;
-    descText.fontSize = 0.02;
-    descText.color = 0x8899aa;
-    descText.maxWidth = width - 0.08;
-    descText.anchorX = 'left';
-    descText.anchorY = 'top';
-    descText.position.set(-width / 2 + 0.04, height / 2 - 0.07, 0.01);
-    descText.sync();
-    group.add(descText);
+    const descMesh = createTextMesh(story.description, {
+      fontSize: 16, color: '#8899aa', maxWidth: 500, meshWidth: 0.75
+    });
+    descMesh.position.set(-0.05, -0.04, 0.01);
+    group.add(descMesh);
 
     return group;
   }
 
-  // Check if a raycast intersection hits a card, return storyId or null
   handleSelect(intersections) {
     for (const intersection of intersections) {
       let obj = intersection.object;
-      // Walk up to find card group with storyId
       while (obj) {
         if (obj.userData?.storyId) {
           return obj.userData.storyId;
@@ -115,17 +91,12 @@ export class MenuPanel extends THREE.Group {
         if (c.isMesh) {
           c.geometry?.dispose();
           c.material?.dispose();
+          if (c.material?.map) c.material.map.dispose();
         }
       });
     }
-    this.cards = [];
   }
 
-  show() {
-    this.visible = true;
-  }
-
-  hide() {
-    this.visible = false;
-  }
+  show() { this.visible = true; }
+  hide() { this.visible = false; }
 }

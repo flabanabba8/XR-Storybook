@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import * as xb from 'xrblocks';
-import 'xrblocks/addons/simulator/SimulatorAddons.js';
 import { StoryManager } from './story/StoryManager.js';
 import { SceneRenderer } from './story/SceneRenderer.js';
 import { StoryPanel } from './ui/StoryPanel.js';
