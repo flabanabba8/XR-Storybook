@@ -61,6 +61,14 @@ class StoryBookApp extends xb.Script {
   }
 
   showMainMenu() {
+    // Re-check for API key (may have been entered on setup screen after init)
+    if (!this.generator) {
+      const key = localStorage.getItem('gemini_key');
+      if (key) {
+        this.generator = new StoryGenerator(key);
+      }
+    }
+
     this.mode = 'menu';
     this.menuIndex = 0;
     const items = this.getMenuItems();
