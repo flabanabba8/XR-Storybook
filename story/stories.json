@@ -1,0 +1,96 @@
+{
+  "stories": [
+    {
+      "id": "dragon-quest",
+      "title": "The Dragon's Quest",
+      "description": "A young knight ventures into an enchanted forest to befriend a lonely dragon.",
+      "scenes": [
+        {
+          "text": "At the edge of the Whispering Woods, a young knight adjusted her armor and peered into the shadows between the ancient trees. The villagers had warned her — a dragon lurked within. But she hadn't come to fight.",
+          "models": [
+            { "file": "knight.glb", "position": [0, 0, -2], "scale": 0.5, "rotation": [0, 0, 0] },
+            { "file": "tree.glb", "position": [-1.5, 0, -3], "scale": 1.2, "rotation": [0, 0.3, 0] },
+            { "file": "tree.glb", "position": [1.8, 0, -3.5], "scale": 1.0, "rotation": [0, -0.5, 0] }
+          ],
+          "ambient": { "color": "#2d5a27", "intensity": 0.6 }
+        },
+        {
+          "text": "Deeper in the forest, she discovered a clearing where fireflies danced in spirals. In the center sat a crumbling stone cottage, its chimney still trailing wisps of smoke. Someone — or something — was home.",
+          "models": [
+            { "file": "cottage.glb", "position": [0, 0, -3], "scale": 0.7, "rotation": [0, 0, 0] },
+            { "file": "tree.glb", "position": [-2, 0, -4], "scale": 1.4, "rotation": [0, 0.8, 0] },
+            { "file": "campfire.glb", "position": [1, 0, -2.5], "scale": 0.3, "rotation": [0, 0, 0] }
+          ],
+          "ambient": { "color": "#3d2e1f", "intensity": 0.5 }
+        },
+        {
+          "text": "A thunderous roar shook the canopy. The dragon burst through the trees — but it was smaller than she expected. Its scales shimmered like opals, and its eyes held not fury, but fear. It was hurt.",
+          "models": [
+            { "file": "dragon.glb", "position": [0, 1.5, -3], "scale": 0.8, "rotation": [0, 0, 0] },
+            { "file": "knight.glb", "position": [-0.5, 0, -1.5], "scale": 0.5, "rotation": [0, 0.3, 0] }
+          ],
+          "ambient": { "color": "#4a2040", "intensity": 0.8 }
+        },
+        {
+          "text": "She knelt and removed her gauntlet, extending a bare hand. The dragon flinched, then slowly lowered its great head. Its breath was warm. Its eyes closed. For the first time in centuries, the dragon was not alone.",
+          "models": [
+            { "file": "knight.glb", "position": [-0.3, 0, -1.8], "scale": 0.5, "rotation": [0, 0.2, 0] },
+            { "file": "dragon.glb", "position": [0.3, 0.3, -2.2], "scale": 0.6, "rotation": [0, -0.3, 0] }
+          ],
+          "ambient": { "color": "#3a2a5c", "intensity": 0.7 }
+        },
+        {
+          "text": "They left the forest together at dawn — knight and dragon, side by side. The villagers gasped. Then they cheered. Some stories don't end with a battle. Some end with a beginning.",
+          "models": [
+            { "file": "knight.glb", "position": [-0.5, 0, -2.5], "scale": 0.5, "rotation": [0, 0, 0] },
+            { "file": "dragon.glb", "position": [0.5, 0.8, -3], "scale": 0.9, "rotation": [0, -0.2, 0] },
+            { "file": "cottage.glb", "position": [-2, 0, -5], "scale": 0.5, "rotation": [0, 0.4, 0] }
+          ],
+          "ambient": { "color": "#e8a642", "intensity": 1.2 }
+        }
+      ]
+    },
+    {
+      "id": "starlight-garden",
+      "title": "The Starlight Garden",
+      "description": "A child discovers a garden where fallen stars grow into flowers.",
+      "scenes": [
+        {
+          "text": "On the night of the longest dark, a child followed a trail of light through the meadow. Each step left a faint glow in the grass, as if the ground remembered where she walked.",
+          "models": [
+            { "file": "tree.glb", "position": [-2, 0, -3], "scale": 1.0, "rotation": [0, 0, 0] },
+            { "file": "tree.glb", "position": [2, 0, -4], "scale": 1.3, "rotation": [0, 1.2, 0] }
+          ],
+          "ambient": { "color": "#0d1b3e", "intensity": 0.3 }
+        },
+        {
+          "text": "She found the garden behind a wall of mist. Flowers she had never seen before — petals of pure light, stems of silver glass. And in the center, a star had fallen, half-buried in the earth, still burning softly.",
+          "models": [
+            { "file": "campfire.glb", "position": [0, 0.2, -2.5], "scale": 0.5, "rotation": [0, 0, 0] },
+            { "file": "tree.glb", "position": [-1.5, 0, -3.5], "scale": 0.8, "rotation": [0, 0.6, 0] },
+            { "file": "tree.glb", "position": [1.5, 0, -3.5], "scale": 0.8, "rotation": [0, -0.6, 0] }
+          ],
+          "ambient": { "color": "#1a0a3e", "intensity": 0.5 }
+        },
+        {
+          "text": "She cupped the star in her hands. It was warm, and it hummed a song she almost recognized — the lullaby her grandmother used to sing. She planted it deeper, covered it with soil, and waited.",
+          "models": [
+            { "file": "campfire.glb", "position": [0, 0, -2], "scale": 0.3, "rotation": [0, 0, 0] }
+          ],
+          "ambient": { "color": "#2a1a4e", "intensity": 0.6 }
+        },
+        {
+          "text": "By morning, the garden had doubled. New flowers of starlight bloomed in every color she could name and some she couldn't. The child smiled. She would come back every night of the longest dark, forever.",
+          "models": [
+            { "file": "campfire.glb", "position": [-1, 0, -2.5], "scale": 0.3, "rotation": [0, 0, 0] },
+            { "file": "campfire.glb", "position": [1, 0, -2.5], "scale": 0.3, "rotation": [0, 0, 0] },
+            { "file": "campfire.glb", "position": [0, 0, -3], "scale": 0.4, "rotation": [0, 0, 0] },
+            { "file": "tree.glb", "position": [-2, 0, -4], "scale": 1.2, "rotation": [0, 0.3, 0] },
+            { "file": "tree.glb", "position": [2, 0, -4], "scale": 1.2, "rotation": [0, -0.3, 0] }
+          ],
+          "ambient": { "color": "#e8d042", "intensity": 1.0 }
+        }
+      ]
+    }
+  ]
+}
