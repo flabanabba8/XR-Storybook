@@ -123,9 +123,8 @@ class StoryBookApp extends xb.Script {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  xb.add(new StoryBookApp());
-  const options = new xb.Options();
-  options.enableGestures();
-  xb.init(options);
-});
+// ES modules are deferred — DOM is already ready, no DOMContentLoaded needed
+xb.add(new StoryBookApp());
+const options = new xb.Options();
+options.enableGestures();
+xb.init(options);
