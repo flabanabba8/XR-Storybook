@@ -31,47 +31,52 @@ class StoryBookApp extends xb.Script {
     this.menuPanel = new MenuPanel();
     this.add(this.menuPanel);
 
-    // Show story selection menu
-    this.menuPanel.buildMenu(this.storyManager.getStoryList());
+    // Menu state
+    this.selectedIndex = 0;
+    this.storyList = this.storyManager.getStoryList();
+    this.menuPanel.buildMenu(this.storyList, this.selectedIndex);
     this.storyPanel.hide();
 
-    // Gesture navigation
+    // Gesture navigation — different behavior in menu vs story
     this.gestureNav = new GestureNav({
-      onNext: () => this.nextScene(),
-      onPrev: () => this.prevScene(),
+      onNext: () => this.handleNext(),
+      onPrev: () => this.handlePrev(),
       onMenu: () => this.toggleMenu()
     });
 
-    // Also support click/select for simulator and controller
     this.inStory = false;
   }
 
   update() {
-    // Animate models gently
     if (this.inStory) {
       this.sceneRenderer.updateAnimations(performance.now());
     }
   }
 
-  // Handle select (pinch or mouse click in simulator)
+  handleNext() {
+    if (this.inStory) {
+      this.nextScene();
+    } else if (this.menuPanel.visible) {
+      // Cycle selection forward
+      this.selectedIndex = (this.selectedIndex + 1) % this.storyList.length;
+      this.menuPanel.buildMenu(this.storyList, this.selectedIndex);
+    }
+  }
+
+  handlePrev() {
+    if (this.inStory) {
+      this.prevScene();
+    } else if (this.menuPanel.visible) {
+      // Cycle selection backward
+      this.selectedIndex = (this.selectedIndex - 1 + this.storyList.length) % this.storyList.length;
+      this.menuPanel.buildMenu(this.storyList, this.selectedIndex);
+    }
+  }
+
+  // Click/pinch starts the selected story (menu) or advances scene (in story)
   onSelectEnd(event) {
     if (!this.inStory && this.menuPanel.visible) {
-      // Check if a story card was selected
-      const controller = event.inputSource?.controller || event.controller;
-      if (controller) {
-        const intersections = xb.core.input.intersectionsForController(controller);
-        const storyId = this.menuPanel.handleSelect(intersections);
-        if (storyId) {
-          this.startStory(storyId);
-          return;
-        }
-      }
-
-      // Fallback: if no raycast hit, start first story (for simulator convenience)
-      const stories = this.storyManager.getStoryList();
-      if (stories.length > 0) {
-        this.startStory(stories[0].id);
-      }
+      this.startStory(this.storyList[this.selectedIndex].id);
     } else if (this.inStory) {
       this.nextScene();
     }
@@ -91,7 +96,6 @@ class StoryBookApp extends xb.Script {
     if (!this.inStory) return;
     const scene = this.storyManager.nextScene();
     if (!scene) {
-      // Story ended — return to menu
       this.exitStory();
       return;
     }
@@ -118,11 +122,12 @@ class StoryBookApp extends xb.Script {
     this.storyManager.exitStory();
     this.sceneRenderer.clearScene();
     this.storyPanel.hide();
-    this.menuPanel.buildMenu(this.storyManager.getStoryList());
+    this.storyList = this.storyManager.getStoryList();
+    this.menuPanel.buildMenu(this.storyList, this.selectedIndex);
   }
 }
 
-// ES modules are deferred — DOM is already ready, no DOMContentLoaded needed
+// ES modules are deferred — DOM is already ready
 xb.add(new StoryBookApp());
 const options = new xb.Options();
 options.enableGestures();
