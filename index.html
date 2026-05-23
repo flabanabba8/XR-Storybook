@@ -68,7 +68,7 @@
     // Auto-skip if key already saved
     const saved = localStorage.getItem('gemini_key');
     if (saved) {
-      document.getElementById('api-key').value = saved;
+      document.getElementById('setup').classList.add('hidden');
     }
   </script>
 
