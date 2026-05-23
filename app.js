@@ -39,6 +39,7 @@ class StoryBookApp extends xb.Script {
     this.storyPanel.hide();
 
     this.inStory = false;
+    this.menuIndex = 0; // fallback cycling index
   }
 
   update() {
@@ -47,33 +48,53 @@ class StoryBookApp extends xb.Script {
     }
   }
 
-  // Pinch or click — use gaze raycast to find what we're looking at
   onSelectEnd(event) {
     if (!this.inStory && this.menuPanel.visible) {
-      // Cast ray from center of view (where user is looking)
-      const camera = xb.core.renderer.xr.isPresenting
-        ? xb.core.renderer.xr.getCamera()
-        : xb.core.camera;
-
-      if (camera) {
-        raycaster.setFromCamera(center, camera);
-        const hits = raycaster.intersectObjects(this.menuPanel.children, false);
-        for (const hit of hits) {
-          const storyId = this.menuPanel.findStoryId(hit.object);
-          if (storyId) {
-            this.startStory(storyId);
-            return;
-          }
-        }
+      // Try gaze raycast first
+      const storyId = this.gazeSelect();
+      if (storyId) {
+        this.startStory(storyId);
+        return;
       }
 
-      // Fallback: if no gaze hit, start first story
-      if (this.storyList.length > 0) {
-        this.startStory(this.storyList[0].id);
-      }
+      // Fallback: cycle through stories on each pinch
+      this.startStory(this.storyList[this.menuIndex].id);
+      this.menuIndex = (this.menuIndex + 1) % this.storyList.length;
     } else if (this.inStory) {
       this.nextScene();
     }
+  }
+
+  gazeSelect() {
+    try {
+      // Try to get the active camera
+      let camera = null;
+
+      // Method 1: XR Blocks core camera
+      if (xb.core && xb.core.camera) {
+        camera = xb.core.camera;
+      }
+
+      // Method 2: Three.js renderer XR camera
+      if (!camera && xb.core?.renderer?.xr?.isPresenting) {
+        camera = xb.core.renderer.xr.getCamera();
+      }
+
+      if (!camera) return null;
+
+      raycaster.setFromCamera(center, camera);
+      const hits = raycaster.intersectObjects(this.menuPanel.cards, false);
+
+      for (const hit of hits) {
+        if (hit.object.userData?.storyId) {
+          return hit.object.userData.storyId;
+        }
+      }
+    } catch (e) {
+      // Raycast failed — fall through to fallback
+      console.warn('Gaze raycast failed:', e.message);
+    }
+    return null;
   }
 
   async startStory(storyId) {
