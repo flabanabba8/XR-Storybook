@@ -16,7 +16,8 @@ export class StoryPanel extends THREE.Group {
       color: 0x0a0a1a,
       transparent: true,
       opacity: 0.85,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
+      depthWrite: false
     });
     this.panel = new THREE.Mesh(panelGeo, panelMat);
     this.add(this.panel);
@@ -27,17 +28,19 @@ export class StoryPanel extends THREE.Group {
       color: 0x4466aa,
       transparent: true,
       opacity: 0.3,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
+      depthWrite: false
     });
     const border = new THREE.Mesh(borderGeo, borderMat);
     border.position.z = -0.001;
     this.add(border);
 
-    // Nav hint (static — created once)
-    this.navMesh = createTextMesh('pinch: next scene  |  open palm: back to menu', {
+    // Nav hint
+    this.navMesh = createTextMesh('pinch: next scene  |  story ends: back to menu', {
       fontSize: 16, color: '#555577', maxWidth: 500, meshWidth: 0.8
     });
     this.navMesh.position.set(0, -0.25, 0.01);
+    fixDepth(this.navMesh);
     this.add(this.navMesh);
 
     // Position in front of user
@@ -45,7 +48,6 @@ export class StoryPanel extends THREE.Group {
   }
 
   show(sceneData) {
-    // Remove old text meshes
     if (this.textMesh) { this.remove(this.textMesh); disposeMesh(this.textMesh); }
     if (this.titleMesh) { this.remove(this.titleMesh); disposeMesh(this.titleMesh); }
     if (this.progressMesh) { this.remove(this.progressMesh); disposeMesh(this.progressMesh); }
@@ -56,6 +58,7 @@ export class StoryPanel extends THREE.Group {
       lineHeight: 1.5
     });
     this.textMesh.position.set(0, 0.05, 0.01);
+    fixDepth(this.textMesh);
     this.add(this.textMesh);
 
     // Title
@@ -63,6 +66,7 @@ export class StoryPanel extends THREE.Group {
       fontSize: 18, color: '#8899cc', maxWidth: 400, meshWidth: 0.6
     });
     this.titleMesh.position.set(-0.3, 0.26, 0.01);
+    fixDepth(this.titleMesh);
     this.add(this.titleMesh);
 
     // Progress
@@ -70,6 +74,7 @@ export class StoryPanel extends THREE.Group {
       fontSize: 18, color: '#666688', maxWidth: 100, meshWidth: 0.15, align: 'right'
     });
     this.progressMesh.position.set(0.55, 0.26, 0.01);
+    fixDepth(this.progressMesh);
     this.add(this.progressMesh);
 
     this.visible = true;
@@ -78,6 +83,14 @@ export class StoryPanel extends THREE.Group {
   hide() {
     this.visible = false;
   }
+}
+
+function fixDepth(mesh) {
+  mesh.traverse(c => {
+    if (c.isMesh && c.material) {
+      c.material.depthWrite = false;
+    }
+  });
 }
 
 function disposeMesh(mesh) {
