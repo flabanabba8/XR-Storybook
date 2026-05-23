@@ -125,8 +125,7 @@ export class StoryGenerator {
     try {
       story = JSON.parse(json);
     } catch (e) {
-      console.error('Failed to parse Gemini response:', json.substring(0, 500));
-      throw new Error('AI returned invalid format. Try again.');
+      throw new Error('Parse failed. Raw response: ' + json.substring(0, 200));
     }
 
     if (!story.scenes || !Array.isArray(story.scenes) || story.scenes.length === 0) {
@@ -150,7 +149,7 @@ export class StoryGenerator {
     try {
       return JSON.parse(json);
     } catch (e) {
-      throw new Error('AI returned invalid scene format. Try again.');
+      throw new Error('Scene parse failed. Raw: ' + json.substring(0, 200));
     }
   }
 }
