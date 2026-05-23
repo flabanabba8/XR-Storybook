@@ -30,17 +30,12 @@ class StoryBookApp extends xb.Script {
     this.menuPanel = new MenuPanel();
     this.add(this.menuPanel);
 
-    // Menu state
-    this.selectedIndex = 0;
+    // Show menu
     this.storyList = this.storyManager.getStoryList();
-    this.menuPanel.buildMenu(this.storyList, this.selectedIndex);
+    this.menuPanel.buildMenu(this.storyList);
     this.storyPanel.hide();
 
     this.inStory = false;
-
-    // Double-pinch detection
-    this.lastPinchTime = 0;
-    this.doublePinchWindow = 600; // ms — two pinches within this = confirm
   }
 
   update() {
@@ -49,23 +44,21 @@ class StoryBookApp extends xb.Script {
     }
   }
 
-  onSelectEnd(event) {
-    const now = performance.now();
-
+  // Native XR Blocks object selection — fires when a mesh is pinched/clicked
+  onObjectSelectEnd(event) {
     if (!this.inStory && this.menuPanel.visible) {
-      const timeSinceLastPinch = now - this.lastPinchTime;
-
-      if (timeSinceLastPinch < this.doublePinchWindow) {
-        // Double-pinch: start the highlighted story
-        this.lastPinchTime = 0; // reset to prevent triple-trigger
-        this.startStory(this.storyList[this.selectedIndex].id);
-      } else {
-        // Single pinch: cycle highlight to next story
-        this.lastPinchTime = now;
-        this.selectedIndex = (this.selectedIndex + 1) % this.storyList.length;
-        this.menuPanel.buildMenu(this.storyList, this.selectedIndex);
+      const storyId = this.menuPanel.findStoryId(event.object);
+      if (storyId) {
+        this.startStory(storyId);
+        return true; // stop propagation
       }
-    } else if (this.inStory) {
+    }
+    return false;
+  }
+
+  // Global select fallback (for advancing scenes in story mode)
+  onSelectEnd(event) {
+    if (this.inStory) {
       this.nextScene();
     }
   }
@@ -96,7 +89,7 @@ class StoryBookApp extends xb.Script {
     this.storyManager.exitStory();
     this.sceneRenderer.clearScene();
     this.storyPanel.hide();
-    this.menuPanel.buildMenu(this.storyList, this.selectedIndex);
+    this.menuPanel.buildMenu(this.storyList);
   }
 }
 

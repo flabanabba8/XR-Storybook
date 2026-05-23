@@ -7,7 +7,7 @@ export class MenuPanel extends THREE.Group {
     this.position.set(0, 1.4, -2);
   }
 
-  buildMenu(storyList, selectedIndex = 0) {
+  buildMenu(storyList) {
     this.clearMenu();
 
     // Title
@@ -19,73 +19,77 @@ export class MenuPanel extends THREE.Group {
     this.add(title);
 
     // Instructions
-    const hint = createTextMesh('pinch to browse  |  double-pinch to start', {
+    const hint = createTextMesh('point and pinch a story to start', {
       fontSize: 18, color: '#667799', maxWidth: 500, meshWidth: 0.8, align: 'center'
     });
     hint.position.set(0, 0.38, 0);
     fixDepth(hint);
     this.add(hint);
 
-    // Story cards — show ALL stories
+    // Story cards — each is a selectable mesh
     const cardWidth = 1.0;
-    const cardHeight = 0.15;
+    const cardHeight = 0.18;
     const spacing = 0.04;
     const startY = 0.22;
 
     storyList.forEach((story, index) => {
-      const isSelected = index === selectedIndex;
       const y = startY - index * (cardHeight + spacing);
 
-      // Card background
+      // Card background — this is the selectable hit target
       const bgGeo = new THREE.PlaneGeometry(cardWidth, cardHeight);
       const bgMat = new THREE.MeshBasicMaterial({
-        color: isSelected ? 0x2a2a6e : 0x1a1a2e,
+        color: 0x1a1a3e,
         transparent: true,
-        opacity: isSelected ? 0.95 : 0.8,
+        opacity: 0.9,
         side: THREE.DoubleSide,
         depthWrite: false
       });
       const bg = new THREE.Mesh(bgGeo, bgMat);
       bg.position.set(0, y, 0);
+      bg.userData.storyId = story.id;  // XR Blocks raycast will find this
       this.add(bg);
 
-      // Selection border
-      if (isSelected) {
-        const borderGeo = new THREE.PlaneGeometry(cardWidth + 0.02, cardHeight + 0.02);
-        const borderMat = new THREE.MeshBasicMaterial({
-          color: 0x6688ff,
-          transparent: true,
-          opacity: 0.7,
-          side: THREE.DoubleSide,
-          depthWrite: false
-        });
-        const border = new THREE.Mesh(borderGeo, borderMat);
-        border.position.set(0, y, -0.001);
-        this.add(border);
-      }
-
-      // Arrow for selected
-      const prefix = isSelected ? '▶  ' : '    ';
-      const titleColor = isSelected ? '#ffffff' : '#99aabb';
-
-      // Story title + description on one line
-      const label = createTextMesh(`${prefix}${story.title}`, {
-        fontSize: 22, color: titleColor, maxWidth: 420, meshWidth: 0.65
+      // Hover border (slightly larger, behind)
+      const borderGeo = new THREE.PlaneGeometry(cardWidth + 0.02, cardHeight + 0.02);
+      const borderMat = new THREE.MeshBasicMaterial({
+        color: 0x4466aa,
+        transparent: true,
+        opacity: 0.3,
+        side: THREE.DoubleSide,
+        depthWrite: false
       });
-      label.position.set(-0.15, y + 0.02, 0.01);
-      fixDepth(label);
-      this.add(label);
+      const border = new THREE.Mesh(borderGeo, borderMat);
+      border.position.set(0, y, -0.001);
+      this.add(border);
 
-      // Short description
-      const desc = createTextMesh(story.description, {
-        fontSize: 14, color: '#778899', maxWidth: 420, meshWidth: 0.65
+      // Story title
+      const titleMesh = createTextMesh(story.title, {
+        fontSize: 24, color: '#eeeeff', maxWidth: 400, meshWidth: 0.6
       });
-      desc.position.set(-0.15, y - 0.04, 0.01);
-      fixDepth(desc);
-      this.add(desc);
+      titleMesh.position.set(-0.15, y + 0.03, 0.01);
+      fixDepth(titleMesh);
+      this.add(titleMesh);
+
+      // Description
+      const descMesh = createTextMesh(story.description, {
+        fontSize: 14, color: '#8899aa', maxWidth: 500, meshWidth: 0.7
+      });
+      descMesh.position.set(-0.1, y - 0.04, 0.01);
+      fixDepth(descMesh);
+      this.add(descMesh);
     });
 
     this.visible = true;
+  }
+
+  // Walk up from a hit object to find the storyId
+  findStoryId(object) {
+    let obj = object;
+    while (obj) {
+      if (obj.userData?.storyId) return obj.userData.storyId;
+      obj = obj.parent;
+    }
+    return null;
   }
 
   clearMenu() {
