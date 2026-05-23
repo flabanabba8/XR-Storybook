@@ -5,6 +5,9 @@ import { SceneRenderer } from './story/SceneRenderer.js';
 import { StoryPanel } from './ui/StoryPanel.js';
 import { MenuPanel } from './ui/MenuPanel.js';
 
+const raycaster = new THREE.Raycaster();
+const center = new THREE.Vector2(0, 0);
+
 class StoryBookApp extends xb.Script {
 
   async init() {
@@ -44,21 +47,31 @@ class StoryBookApp extends xb.Script {
     }
   }
 
-  // Native XR Blocks object selection — fires when a mesh is pinched/clicked
-  onObjectSelectEnd(event) {
-    if (!this.inStory && this.menuPanel.visible) {
-      const storyId = this.menuPanel.findStoryId(event.object);
-      if (storyId) {
-        this.startStory(storyId);
-        return true; // stop propagation
-      }
-    }
-    return false;
-  }
-
-  // Global select fallback (for advancing scenes in story mode)
+  // Pinch or click — use gaze raycast to find what we're looking at
   onSelectEnd(event) {
-    if (this.inStory) {
+    if (!this.inStory && this.menuPanel.visible) {
+      // Cast ray from center of view (where user is looking)
+      const camera = xb.core.renderer.xr.isPresenting
+        ? xb.core.renderer.xr.getCamera()
+        : xb.core.camera;
+
+      if (camera) {
+        raycaster.setFromCamera(center, camera);
+        const hits = raycaster.intersectObjects(this.menuPanel.children, false);
+        for (const hit of hits) {
+          const storyId = this.menuPanel.findStoryId(hit.object);
+          if (storyId) {
+            this.startStory(storyId);
+            return;
+          }
+        }
+      }
+
+      // Fallback: if no gaze hit, start first story
+      if (this.storyList.length > 0) {
+        this.startStory(this.storyList[0].id);
+      }
+    } else if (this.inStory) {
       this.nextScene();
     }
   }

@@ -4,7 +4,7 @@ import { createTextMesh } from './TextMesh.js';
 export class MenuPanel extends THREE.Group {
   constructor() {
     super();
-    this.position.set(0, 1.4, -2);
+    this.position.set(0, 1.3, -1.2); // close enough for gaze selection
   }
 
   buildMenu(storyList) {
@@ -19,7 +19,7 @@ export class MenuPanel extends THREE.Group {
     this.add(title);
 
     // Instructions
-    const hint = createTextMesh('point and pinch a story to start', {
+    const hint = createTextMesh('look at a story and pinch to start', {
       fontSize: 18, color: '#667799', maxWidth: 500, meshWidth: 0.8, align: 'center'
     });
     hint.position.set(0, 0.38, 0);
