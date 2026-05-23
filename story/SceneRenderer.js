@@ -5,6 +5,7 @@ export class SceneRenderer {
   constructor(parentObject) {
     this.parent = parentObject;
     this.currentModels = [];
+    this.animations = []; // active entrance animations
     this.ambientLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8);
     this.parent.add(this.ambientLight);
   }
@@ -34,16 +35,13 @@ export class SceneRenderer {
 
       // Scale
       const s = modelDef.scale || 1.0;
-      wrapper.scale.set(s, s, s);
+      const targetScale = new THREE.Vector3(s, s, s);
+      wrapper.scale.set(0.01, 0.01, 0.01);
 
       // Rotation
       if (modelDef.rotation) {
         wrapper.rotation.set(modelDef.rotation[0], modelDef.rotation[1], modelDef.rotation[2]);
       }
-
-      // Start small for entrance animation
-      const targetScale = wrapper.scale.clone();
-      wrapper.scale.set(0.01, 0.01, 0.01);
 
       // Start transparent
       wrapper.traverse(child => {
@@ -57,50 +55,65 @@ export class SceneRenderer {
       this.parent.add(wrapper);
       this.currentModels.push({ wrapper, targetScale, baseY: pos[1] });
 
-      this.animateEntrance(wrapper, targetScale);
+      // Queue entrance animation (driven by update(), not requestAnimationFrame)
+      this.animations.push({
+        wrapper,
+        targetScale,
+        startTime: performance.now(),
+        duration: 600
+      });
     }
   }
 
-  animateEntrance(object, targetScale) {
-    const startScale = new THREE.Vector3(0.01, 0.01, 0.01);
-    const duration = 600;
-    const startTime = performance.now();
+  // Called every frame from app.js update() — works in both browser and WebXR
+  updateAnimations(time) {
+    // Process entrance animations
+    for (let i = this.animations.length - 1; i >= 0; i--) {
+      const anim = this.animations[i];
+      const elapsed = time - anim.startTime;
+      const t = Math.min(elapsed / anim.duration, 1);
+      const ease = 1 - Math.pow(1 - t, 3);
 
-    const animate = () => {
-      const elapsed = performance.now() - startTime;
-      const t = Math.min(elapsed / duration, 1);
-      const ease = 1 - Math.pow(1 - t, 3); // ease-out cubic
+      anim.wrapper.scale.lerpVectors(
+        new THREE.Vector3(0.01, 0.01, 0.01),
+        anim.targetScale,
+        ease
+      );
 
-      object.scale.lerpVectors(startScale, targetScale, ease);
-
-      object.traverse(child => {
+      anim.wrapper.traverse(child => {
         if (child.isMesh && child.material.transparent) {
           child.material.opacity = ease;
         }
       });
 
-      if (t < 1) {
-        requestAnimationFrame(animate);
-      } else {
-        // Make opaque after animation
-        object.traverse(child => {
+      if (t >= 1) {
+        // Animation complete — make fully opaque
+        anim.wrapper.traverse(child => {
           if (child.isMesh) {
             child.material.opacity = 1;
           }
         });
+        this.animations.splice(i, 1);
       }
-    };
-    requestAnimationFrame(animate);
+    }
+
+    // Gentle floating bob for all models
+    for (let i = 0; i < this.currentModels.length; i++) {
+      const entry = this.currentModels[i];
+      const offset = i * 1.7;
+      entry.wrapper.position.y = entry.baseY + Math.sin(time * 0.0008 + offset) * 0.02;
+    }
   }
 
   clearScene() {
+    this.animations = [];
     for (const entry of this.currentModels) {
       this.parent.remove(entry.wrapper);
       entry.wrapper.traverse(child => {
         if (child.isMesh) {
           child.geometry?.dispose();
-          child.material?.dispose();
           if (child.material?.map) child.material.map.dispose();
+          child.material?.dispose();
         }
         if (child.isLight) {
           child.dispose?.();
@@ -108,14 +121,5 @@ export class SceneRenderer {
       });
     }
     this.currentModels = [];
-  }
-
-  updateAnimations(time) {
-    for (let i = 0; i < this.currentModels.length; i++) {
-      const entry = this.currentModels[i];
-      const offset = i * 1.7;
-      // Gentle floating bob
-      entry.wrapper.position.y = entry.baseY + Math.sin(time * 0.0008 + offset) * 0.02;
-    }
   }
 }
