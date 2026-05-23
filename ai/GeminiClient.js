@@ -11,7 +11,7 @@ export class GeminiClient {
   async generate(prompt, options = {}) {
     const {
       temperature = 0.9,
-      maxTokens = 4096
+      maxTokens = 8192
     } = options;
 
     const url = `${API_BASE}/${MODEL}:generateContent?key=${this.apiKey}`;
@@ -35,8 +35,21 @@ export class GeminiClient {
     }
 
     const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    // Check for blocked/filtered responses
+    if (data.candidates?.[0]?.finishReason === 'SAFETY') {
+      throw new Error('Response was filtered by safety settings. Try a different theme.');
+    }
+
+    let text = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!text) throw new Error('No response from Gemini');
+
+    // Strip markdown code blocks if present
+    text = text.trim();
+    if (text.startsWith('```')) {
+      text = text.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
+    }
+
     return text;
   }
 }
