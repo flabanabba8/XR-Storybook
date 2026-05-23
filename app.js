@@ -37,11 +37,12 @@ class StoryBookApp extends xb.Script {
     this.menuPanel.buildMenu(this.storyList, this.selectedIndex);
     this.storyPanel.hide();
 
-    // Gesture navigation — different behavior in menu vs story
+    // Gesture navigation
+    // Pinch = advance (cycle menu or next scene)
+    // Open palm = confirm/start (start story or return to menu)
     this.gestureNav = new GestureNav({
-      onNext: () => this.handleNext(),
-      onPrev: () => this.handlePrev(),
-      onMenu: () => this.toggleMenu()
+      onPinch: () => this.handlePinch(),
+      onPalm: () => this.handlePalm()
     });
 
     this.inStory = false;
@@ -53,29 +54,29 @@ class StoryBookApp extends xb.Script {
     }
   }
 
-  handleNext() {
+  handlePinch() {
     if (this.inStory) {
       this.nextScene();
     } else if (this.menuPanel.visible) {
-      // Cycle selection forward
+      // Cycle to next story
       this.selectedIndex = (this.selectedIndex + 1) % this.storyList.length;
       this.menuPanel.buildMenu(this.storyList, this.selectedIndex);
     }
   }
 
-  handlePrev() {
+  handlePalm() {
     if (this.inStory) {
-      this.prevScene();
+      this.exitStory();
     } else if (this.menuPanel.visible) {
-      // Cycle selection backward
-      this.selectedIndex = (this.selectedIndex - 1 + this.storyList.length) % this.storyList.length;
-      this.menuPanel.buildMenu(this.storyList, this.selectedIndex);
+      // Start the highlighted story
+      this.startStory(this.storyList[this.selectedIndex].id);
     }
   }
 
-  // Click/pinch starts the selected story (menu) or advances scene (in story)
+  // Click also works (simulator + Quest controller fallback)
   onSelectEnd(event) {
     if (!this.inStory && this.menuPanel.visible) {
+      // Click on menu = start highlighted story
       this.startStory(this.storyList[this.selectedIndex].id);
     } else if (this.inStory) {
       this.nextScene();
@@ -99,14 +100,6 @@ class StoryBookApp extends xb.Script {
       this.exitStory();
       return;
     }
-    this.storyPanel.show(scene);
-    await this.sceneRenderer.renderScene(scene);
-  }
-
-  async prevScene() {
-    if (!this.inStory) return;
-    const scene = this.storyManager.prevScene();
-    if (!scene) return;
     this.storyPanel.show(scene);
     await this.sceneRenderer.renderScene(scene);
   }

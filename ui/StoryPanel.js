@@ -34,7 +34,7 @@ export class StoryPanel extends THREE.Group {
     this.add(border);
 
     // Nav hint (static — created once)
-    this.navMesh = createTextMesh('pinch right: next  |  pinch left: back  |  open palm: menu', {
+    this.navMesh = createTextMesh('pinch: next scene  |  open palm: back to menu', {
       fontSize: 16, color: '#555577', maxWidth: 500, meshWidth: 0.8
     });
     this.navMesh.position.set(0, -0.25, 0.01);

@@ -18,7 +18,7 @@ export class MenuPanel extends THREE.Group {
     this.add(title);
 
     // Subtitle
-    const subtitle = createTextMesh('pinch left/right to choose  |  click or pinch to start', {
+    const subtitle = createTextMesh('pinch to cycle  |  open palm to start  |  click to start', {
       fontSize: 18, color: '#667799', maxWidth: 500, meshWidth: 0.8, align: 'center'
     });
     subtitle.position.set(0, 0.28, 0);
