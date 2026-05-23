@@ -9,7 +9,117 @@ export class StoryPanel extends THREE.Group {
   }
 
   show(sceneData) {
-    // Remove old card
+    this.clearCard();
+
+    const title = sceneData.storyTitle || '';
+    const progress = `${sceneData.sceneNumber} / ${sceneData.totalScenes}`;
+    const body = sceneData.text;
+
+    this.cardMesh = renderCard(700, 350, (ctx, w, h) => {
+      const pad = 20;
+
+      // Title + progress
+      ctx.font = '16px Arial, sans-serif';
+      ctx.fillStyle = '#8899cc';
+      ctx.fillText(title, pad, pad + 14);
+      ctx.fillStyle = '#666688';
+      ctx.textAlign = 'right';
+      ctx.fillText(progress, w - pad, pad + 14);
+      ctx.textAlign = 'left';
+
+      // Body
+      ctx.font = '20px Arial, sans-serif';
+      ctx.fillStyle = '#dddddd';
+      const lines = wrapText(ctx, body, w - pad * 2);
+      let y = pad + 44;
+      for (const line of lines) {
+        ctx.fillText(line, pad, y);
+        y += 28;
+      }
+
+      // Hint
+      ctx.font = '14px Arial, sans-serif';
+      ctx.fillStyle = '#555577';
+      ctx.textAlign = 'center';
+      ctx.fillText('pinch: next scene', w / 2, h - pad);
+    });
+    this.add(this.cardMesh);
+    this.visible = true;
+  }
+
+  showMessage(message) {
+    this.clearCard();
+
+    this.cardMesh = renderCard(600, 150, (ctx, w, h) => {
+      ctx.font = '24px Arial, sans-serif';
+      ctx.fillStyle = '#ccddff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(message, w / 2, h / 2);
+    });
+    this.add(this.cardMesh);
+    this.visible = true;
+  }
+
+  showInteractive(text, title, choices) {
+    this.clearCard();
+
+    const hasChoices = choices && choices.length > 0;
+    const height = hasChoices ? 420 : 350;
+
+    this.cardMesh = renderCard(700, height, (ctx, w, h) => {
+      const pad = 20;
+
+      // Title
+      ctx.font = '16px Arial, sans-serif';
+      ctx.fillStyle = '#8899cc';
+      ctx.fillText(title, pad, pad + 14);
+
+      // Body
+      ctx.font = '20px Arial, sans-serif';
+      ctx.fillStyle = '#dddddd';
+      const lines = wrapText(ctx, text, w - pad * 2);
+      let y = pad + 44;
+      for (const line of lines) {
+        ctx.fillText(line, pad, y);
+        y += 28;
+      }
+
+      if (hasChoices) {
+        // Separator
+        y += 10;
+        ctx.strokeStyle = '#334466';
+        ctx.beginPath();
+        ctx.moveTo(pad, y);
+        ctx.lineTo(w - pad, y);
+        ctx.stroke();
+        y += 20;
+
+        // Choices
+        ctx.font = '14px Arial, sans-serif';
+        ctx.fillStyle = '#667799';
+        ctx.fillText('Pinch to cycle choices, each pinch selects:', pad, y);
+        y += 24;
+
+        ctx.font = '18px Arial, sans-serif';
+        choices.forEach((choice, i) => {
+          ctx.fillStyle = '#aabbff';
+          ctx.fillText(`${i + 1}. ${choice}`, pad + 10, y);
+          y += 26;
+        });
+      } else {
+        // Story ended
+        ctx.font = '18px Arial, sans-serif';
+        ctx.fillStyle = '#aabbcc';
+        ctx.textAlign = 'center';
+        ctx.fillText('— The End — pinch to return', w / 2, h - pad - 10);
+      }
+    });
+    this.add(this.cardMesh);
+    this.visible = true;
+  }
+
+  clearCard() {
     if (this.cardMesh) {
       this.remove(this.cardMesh);
       this.cardMesh.geometry?.dispose();
@@ -17,85 +127,46 @@ export class StoryPanel extends THREE.Group {
       this.cardMesh.material?.dispose();
       this.cardMesh = null;
     }
-
-    // Build text content
-    const title = sceneData.storyTitle || '';
-    const progress = `${sceneData.sceneNumber} / ${sceneData.totalScenes}`;
-    const body = sceneData.text;
-    const hint = 'pinch: next scene';
-
-    // Render to canvas
-    const width = 700;
-    const height = 350;
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
-
-    // Background
-    ctx.fillStyle = 'rgba(10, 10, 26, 0.9)';
-    ctx.fillRect(0, 0, width, height);
-
-    // Border
-    ctx.strokeStyle = '#4466aa';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(1, 1, width - 2, height - 2);
-
-    const pad = 20;
-
-    // Title (top left)
-    ctx.font = '16px Arial, sans-serif';
-    ctx.fillStyle = '#8899cc';
-    ctx.textBaseline = 'top';
-    ctx.fillText(title, pad, pad);
-
-    // Progress (top right)
-    ctx.fillStyle = '#666688';
-    ctx.textAlign = 'right';
-    ctx.fillText(progress, width - pad, pad);
-    ctx.textAlign = 'left';
-
-    // Story text (body, word-wrapped)
-    ctx.font = '20px Arial, sans-serif';
-    ctx.fillStyle = '#dddddd';
-    const lines = wrapText(ctx, body, width - pad * 2);
-    const lineHeight = 28;
-    let y = pad + 40;
-    for (const line of lines) {
-      ctx.fillText(line, pad, y);
-      y += lineHeight;
-    }
-
-    // Nav hint (bottom center)
-    ctx.font = '14px Arial, sans-serif';
-    ctx.fillStyle = '#555577';
-    ctx.textAlign = 'center';
-    ctx.fillText(hint, width / 2, height - pad);
-    ctx.textAlign = 'left';
-
-    // Create mesh
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.minFilter = THREE.LinearFilter;
-
-    const meshWidth = 1.3;
-    const meshHeight = meshWidth * (height / width);
-
-    this.cardMesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(meshWidth, meshHeight),
-      new THREE.MeshBasicMaterial({
-        map: texture,
-        transparent: true,
-        side: THREE.DoubleSide,
-        depthWrite: false
-      })
-    );
-    this.add(this.cardMesh);
-    this.visible = true;
   }
 
   hide() {
     this.visible = false;
   }
+}
+
+function renderCard(width, height, drawFn) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  // Background
+  ctx.fillStyle = 'rgba(10, 10, 26, 0.92)';
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeStyle = '#4466aa';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(1, 1, width - 2, height - 2);
+
+  ctx.textBaseline = 'top';
+  ctx.textAlign = 'left';
+
+  drawFn(ctx, width, height);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.minFilter = THREE.LinearFilter;
+
+  const meshWidth = 1.3;
+  const meshHeight = meshWidth * (height / width);
+
+  return new THREE.Mesh(
+    new THREE.PlaneGeometry(meshWidth, meshHeight),
+    new THREE.MeshBasicMaterial({
+      map: texture,
+      transparent: true,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    })
+  );
 }
 
 function wrapText(ctx, text, maxWidth) {

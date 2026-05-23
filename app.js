@@ -4,6 +4,7 @@ import { StoryManager } from './story/StoryManager.js';
 import { SceneRenderer } from './story/SceneRenderer.js';
 import { StoryPanel } from './ui/StoryPanel.js';
 import { MenuPanel } from './ui/MenuPanel.js';
+import { StoryGenerator, STORY_THEMES } from './ai/StoryGenerator.js';
 
 const raycaster = new THREE.Raycaster();
 const center = new THREE.Vector2(0, 0);
@@ -23,6 +24,12 @@ class StoryBookApp extends xb.Script {
     this.storyManager = new StoryManager();
     await this.storyManager.load();
 
+    // AI story generator (key from localStorage or URL param)
+    this.apiKey = localStorage.getItem('gemini_key')
+      || new URLSearchParams(window.location.search).get('key')
+      || null;
+    this.generator = this.apiKey ? new StoryGenerator(this.apiKey) : null;
+
     // Scene renderer
     this.sceneRenderer = new SceneRenderer(this);
 
@@ -33,13 +40,18 @@ class StoryBookApp extends xb.Script {
     this.menuPanel = new MenuPanel();
     this.add(this.menuPanel);
 
-    // Show menu
-    this.storyList = this.storyManager.getStoryList();
-    this.menuPanel.buildMenu(this.storyList);
-    this.storyPanel.hide();
+    this.showMainMenu();
 
     this.inStory = false;
-    this.menuIndex = 0; // fallback cycling index
+    this.mode = 'menu'; // 'menu' | 'themes' | 'story' | 'generating' | 'choices'
+    this.menuIndex = 0;
+    this.pendingAction = null;
+
+    // Interactive story state
+    this.interactiveHistory = '';
+    this.interactiveTitle = '';
+    this.currentChoices = null;
+    this.choiceIndex = 0;
   }
 
   update() {
@@ -48,53 +60,167 @@ class StoryBookApp extends xb.Script {
     }
   }
 
-  onSelectEnd(event) {
-    if (!this.inStory && this.menuPanel.visible) {
-      // Try gaze raycast first
-      const storyId = this.gazeSelect();
-      if (storyId) {
-        this.startStory(storyId);
-        return;
-      }
+  showMainMenu() {
+    this.mode = 'menu';
+    this.menuIndex = 0;
+    const items = this.getMenuItems();
+    this.menuPanel.buildMenu(items);
+    this.storyPanel.hide();
+  }
 
-      // Fallback: cycle through stories on each pinch
-      this.startStory(this.storyList[this.menuIndex].id);
-      this.menuIndex = (this.menuIndex + 1) % this.storyList.length;
-    } else if (this.inStory) {
+  getMenuItems() {
+    const items = this.storyManager.getStoryList().map(s => ({
+      id: s.id,
+      title: s.title,
+      description: s.description,
+      action: 'story'
+    }));
+
+    if (this.generator) {
+      items.push({
+        id: 'ai-generate',
+        title: '✨ AI Generate Story',
+        description: 'Gemini creates a new story just for you',
+        action: 'generate'
+      });
+      items.push({
+        id: 'ai-interactive',
+        title: '🎲 Interactive Adventure',
+        description: 'Make choices as Gemini narrates live',
+        action: 'interactive'
+      });
+    }
+
+    return items;
+  }
+
+  showThemeMenu() {
+    this.mode = 'themes';
+    this.menuIndex = 0;
+    const items = STORY_THEMES.filter(t => t.id !== 'custom').map(t => ({
+      id: t.id,
+      title: t.label,
+      description: t.prompt.substring(0, 60) + '...',
+      action: 'theme'
+    }));
+    this.menuPanel.buildMenu(items);
+  }
+
+  onSelectEnd(event) {
+    if (this.mode === 'generating') return; // ignore during generation
+
+    if (this.mode === 'menu') {
+      const items = this.getMenuItems();
+      const item = items[this.menuIndex % items.length];
+      this.menuIndex = (this.menuIndex + 1) % items.length;
+
+      if (!item) return;
+
+      if (item.action === 'story') {
+        this.startStory(item.id);
+      } else if (item.action === 'generate' || item.action === 'interactive') {
+        this.pendingAction = item.action;
+        this.showThemeMenu();
+      }
+    } else if (this.mode === 'themes') {
+      const themes = STORY_THEMES.filter(t => t.id !== 'custom');
+      const theme = themes[this.menuIndex % themes.length];
+      this.menuIndex = (this.menuIndex + 1) % themes.length;
+
+      if (this.pendingAction === 'generate') {
+        this.generateStory(theme.prompt);
+      } else if (this.pendingAction === 'interactive') {
+        this.startInteractive(theme.prompt);
+      }
+    } else if (this.mode === 'choices') {
+      // Select current choice
+      if (this.currentChoices) {
+        const choice = this.currentChoices[this.choiceIndex % this.currentChoices.length];
+        this.choiceIndex = (this.choiceIndex + 1) % this.currentChoices.length;
+        this.continueInteractive(choice);
+      }
+    } else if (this.mode === 'story') {
       this.nextScene();
     }
   }
 
-  gazeSelect() {
+  async generateStory(theme) {
+    this.mode = 'generating';
+    this.menuPanel.hide();
+    this.storyPanel.showMessage('✨ Gemini is crafting your story...');
+
     try {
-      // Try to get the active camera
-      let camera = null;
+      const story = await this.generator.generateStory(theme);
+      this.storyManager.addStory(story);
+      this.storyPanel.hide();
+      this.startStory(story.id);
+    } catch (e) {
+      console.error('Story generation failed:', e);
+      this.mode = 'menu';
+      this.storyPanel.showMessage(`Error: ${e.message}`);
+      setTimeout(() => this.showMainMenu(), 3000);
+    }
+  }
 
-      // Method 1: XR Blocks core camera
-      if (xb.core && xb.core.camera) {
-        camera = xb.core.camera;
-      }
+  async startInteractive(theme) {
+    this.mode = 'generating';
+    this.menuPanel.hide();
+    this.storyPanel.showMessage('🎲 Gemini is setting the scene...');
+    this.interactiveHistory = '';
 
-      // Method 2: Three.js renderer XR camera
-      if (!camera && xb.core?.renderer?.xr?.isPresenting) {
-        camera = xb.core.renderer.xr.getCamera();
-      }
+    try {
+      const story = await this.generator.generateStory(theme);
+      // Use first scene, then go interactive
+      const scene = story.scenes[0];
+      this.interactiveHistory = scene.text;
 
-      if (!camera) return null;
+      await this.sceneRenderer.renderScene(scene);
+      this.inStory = true;
 
-      raycaster.setFromCamera(center, camera);
-      const hits = raycaster.intersectObjects(this.menuPanel.cards, false);
+      // Show first scene with choices
+      this.storyPanel.showInteractive(scene.text, story.title, [
+        'Continue the adventure',
+        'Take a different path'
+      ]);
+      this.currentChoices = ['Continue the adventure', 'Take a different path'];
+      this.choiceIndex = 0;
+      this.interactiveTitle = story.title;
+      this.mode = 'choices';
+    } catch (e) {
+      console.error('Interactive start failed:', e);
+      this.mode = 'menu';
+      this.storyPanel.showMessage(`Error: ${e.message}`);
+      setTimeout(() => this.showMainMenu(), 3000);
+    }
+  }
 
-      for (const hit of hits) {
-        if (hit.object.userData?.storyId) {
-          return hit.object.userData.storyId;
-        }
+  async continueInteractive(choice) {
+    this.mode = 'generating';
+    this.storyPanel.showMessage(`Choosing: "${choice}"...`);
+
+    try {
+      const scene = await this.generator.continueStory(this.interactiveHistory, choice);
+      this.interactiveHistory += `\nUser chose: ${choice}\n${scene.text}`;
+
+      await this.sceneRenderer.renderScene(scene);
+
+      if (scene.choices && scene.choices.length > 0) {
+        this.storyPanel.showInteractive(scene.text, this.interactiveTitle, scene.choices);
+        this.currentChoices = scene.choices;
+        this.choiceIndex = 0;
+        this.mode = 'choices';
+      } else {
+        // Story ended
+        this.storyPanel.showInteractive(scene.text, this.interactiveTitle + ' — The End', []);
+        this.mode = 'story'; // next pinch exits
+        this.currentChoices = null;
       }
     } catch (e) {
-      // Raycast failed — fall through to fallback
-      console.warn('Gaze raycast failed:', e.message);
+      console.error('Continue failed:', e);
+      this.mode = 'menu';
+      this.storyPanel.showMessage(`Error: ${e.message}`);
+      setTimeout(() => this.showMainMenu(), 3000);
     }
-    return null;
   }
 
   async startStory(storyId) {
@@ -105,10 +231,11 @@ class StoryBookApp extends xb.Script {
     this.storyPanel.show(scene);
     await this.sceneRenderer.renderScene(scene);
     this.inStory = true;
+    this.mode = 'story';
   }
 
   async nextScene() {
-    if (!this.inStory) return;
+    if (this.mode !== 'story') return;
     const scene = this.storyManager.nextScene();
     if (!scene) {
       this.exitStory();
@@ -122,8 +249,7 @@ class StoryBookApp extends xb.Script {
     this.inStory = false;
     this.storyManager.exitStory();
     this.sceneRenderer.clearScene();
-    this.storyPanel.hide();
-    this.menuPanel.buildMenu(this.storyList);
+    this.showMainMenu();
   }
 }
 

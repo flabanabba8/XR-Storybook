@@ -63,6 +63,13 @@ export class StoryManager {
     return this.currentStory && this.currentSceneIndex > 0;
   }
 
+  addStory(story) {
+    // Avoid duplicates
+    if (!this.stories.find(s => s.id === story.id)) {
+      this.stories.push(story);
+    }
+  }
+
   exitStory() {
     this.currentStory = null;
     this.currentSceneIndex = -1;

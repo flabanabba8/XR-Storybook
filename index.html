@@ -5,11 +5,46 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>XR Storybook</title>
   <style>
-    body { margin: 0; overflow: hidden; background: #0a0a0a; }
+    body { margin: 0; overflow: hidden; background: #0a0a0a; font-family: Arial, sans-serif; }
     canvas { display: block; }
+    #setup {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: #0a0a1a; color: #ccc; z-index: 100;
+    }
+    #setup.hidden { display: none; }
+    #setup-box {
+      text-align: center; max-width: 400px; padding: 30px;
+    }
+    #setup-box h1 { color: #ccddff; margin-bottom: 5px; }
+    #setup-box p { color: #667799; font-size: 14px; }
+    #setup-box input {
+      width: 100%; padding: 10px; margin: 10px 0;
+      background: #1a1a3e; border: 1px solid #4466aa; color: #fff;
+      border-radius: 4px; font-size: 14px;
+    }
+    #setup-box button {
+      padding: 12px 30px; background: #4466aa; color: #fff;
+      border: none; border-radius: 4px; cursor: pointer; font-size: 16px;
+      margin: 5px;
+    }
+    #setup-box button:hover { background: #5577bb; }
+    #setup-box .skip { background: #333; }
   </style>
 </head>
 <body>
+  <div id="setup">
+    <div id="setup-box">
+      <h1>XR Storybook</h1>
+      <p>Enter your Gemini API key for AI-generated stories, or skip to use pre-written stories only.</p>
+      <input type="text" id="api-key" placeholder="Gemini API key (from aistudio.google.com)" />
+      <div>
+        <button onclick="startApp()">Start with AI</button>
+        <button class="skip" onclick="startApp(true)">Skip — Pre-written only</button>
+      </div>
+    </div>
+  </div>
+
   <script type="importmap">
   {
     "imports": {
@@ -20,6 +55,23 @@
     }
   }
   </script>
+
+  <script>
+    function startApp(skip) {
+      const key = skip ? '' : document.getElementById('api-key').value.trim();
+      if (key) {
+        localStorage.setItem('gemini_key', key);
+      }
+      document.getElementById('setup').classList.add('hidden');
+    }
+
+    // Auto-skip if key already saved
+    const saved = localStorage.getItem('gemini_key');
+    if (saved) {
+      document.getElementById('api-key').value = saved;
+    }
+  </script>
+
   <script type="module" src="app.js"></script>
 </body>
 </html>
