@@ -91,6 +91,75 @@
           "ambient": { "color": "#e8d042", "intensity": 1.0 }
         }
       ]
+    },
+    {
+      "id": "generic-anime",
+      "title": "The Most Generic Anime Ever",
+      "description": "Every trope. No exceptions. Taro-kun's journey to become the Protagonist.",
+      "scenes": [
+        {
+          "text": "Taro Protagonisto was late for his first day at Convenient Plot Academy. He sprinted down the street with toast in his mouth — as is legally required. He had no idea he was secretly the Chosen One, the reincarnation of a demon lord, AND the heir to a legendary sword. He thought he was just bad at alarm clocks.",
+          "models": [
+            { "file": "anime-protag.glb", "position": [0.5, 0, -2], "scale": 0.7, "rotation": [0, -0.5, 0] },
+            { "file": "school.glb", "position": [-1, 0, -4], "scale": 0.6, "rotation": [0, 0.2, 0] },
+            { "file": "cherry-tree.glb", "position": [2, 0, -3], "scale": 1.0, "rotation": [0, 0, 0] }
+          ],
+          "ambient": { "color": "#ffcc88", "intensity": 1.0 }
+        },
+        {
+          "text": "He crashed into someone at the school gate. It was a girl with pink twin-tails. 'Watch where you're going, BAKA!' she screamed, even though she was clearly the one standing in the middle of the path. Her face turned red. She had already fallen in love. She would deny this for exactly 47 episodes.",
+          "models": [
+            { "file": "anime-protag.glb", "position": [-0.3, 0, -1.8], "scale": 0.7, "rotation": [0, 0.3, 0] },
+            { "file": "tsundere.glb", "position": [0.3, 0, -1.8], "scale": 0.7, "rotation": [0, -0.3, 0] },
+            { "file": "school.glb", "position": [0, 0, -4], "scale": 0.7, "rotation": [0, 0, 0] },
+            { "file": "cherry-tree.glb", "position": [-2, 0, -3], "scale": 0.9, "rotation": [0, 0.4, 0] }
+          ],
+          "ambient": { "color": "#ffaacc", "intensity": 0.9 }
+        },
+        {
+          "text": "At lunch, a mysterious transfer student appeared. He had silver hair, a black coat, and was leaning against a wall with his arms crossed — the universal anime pose for 'I am important and brooding.' 'Taro Protagonisto...' he whispered. 'I've been waiting for you.' He paused dramatically for 45 seconds. It was deeply uncomfortable for everyone.",
+          "models": [
+            { "file": "rival.glb", "position": [0, 0, -2.5], "scale": 0.8, "rotation": [0, 0, 0] },
+            { "file": "anime-protag.glb", "position": [-1, 0, -2], "scale": 0.7, "rotation": [0, 0.4, 0] },
+            { "file": "ramen.glb", "position": [-0.8, 0.6, -1.8], "scale": 1.5, "rotation": [0, 0, 0] }
+          ],
+          "ambient": { "color": "#2a2a4a", "intensity": 0.6 }
+        },
+        {
+          "text": "'I challenge you to a duel!' the rival announced. Taro didn't know how to fight. But then a katana materialized in his hand, glowing with blue flame. 'WHAT?!' screamed everyone in unison. 'N-NANI?!' added the rival, because saying it in Japanese makes it more dramatic. An inner monologue lasting twelve minutes explained that this was the Blade of Convenient Plot Resolution.",
+          "models": [
+            { "file": "anime-protag.glb", "position": [-0.5, 0, -2], "scale": 0.7, "rotation": [0, 0.3, 0] },
+            { "file": "rival.glb", "position": [0.5, 0, -2], "scale": 0.8, "rotation": [0, -0.3, 0] },
+            { "file": "katana.glb", "position": [-0.2, 0.4, -1.7], "scale": 0.8, "rotation": [0, 0, 0.5] },
+            { "file": "cherry-tree.glb", "position": [2, 0, -3.5], "scale": 1.0, "rotation": [0, -0.3, 0] }
+          ],
+          "ambient": { "color": "#1a2a5a", "intensity": 0.8 }
+        },
+        {
+          "text": "The fight lasted three episodes but can be summarized as follows: they clashed swords, there was an explosion, the rival said 'impossible,' Taro unlocked a new form by remembering a friend said something nice to him once, and the tsundere watched from behind a tree pretending she didn't care while clearly caring very much.",
+          "models": [
+            { "file": "anime-protag.glb", "position": [-0.8, 0, -2.5], "scale": 0.8, "rotation": [0, 0.4, 0] },
+            { "file": "rival.glb", "position": [0.8, 0, -2.5], "scale": 0.8, "rotation": [0, -0.4, 0] },
+            { "file": "explosion.glb", "position": [0, 0.5, -2.5], "scale": 1.2, "rotation": [0, 0, 0] },
+            { "file": "tsundere.glb", "position": [-2, 0, -3], "scale": 0.5, "rotation": [0, 0.6, 0] },
+            { "file": "cherry-tree.glb", "position": [-2.3, 0, -3.2], "scale": 0.8, "rotation": [0, 0, 0] }
+          ],
+          "ambient": { "color": "#ff4400", "intensity": 1.5 }
+        },
+        {
+          "text": "Taro won, obviously. The rival became his best friend immediately — as is tradition. The tsundere made him a bento box but insisted it was 'just leftover rice, don't get the wrong idea!' The narrator confirmed Season 2 would involve a tournament arc, a beach episode, and at least one hot springs scene. Taro still had toast crumbs on his face.",
+          "models": [
+            { "file": "anime-protag.glb", "position": [0, 0, -2], "scale": 0.7, "rotation": [0, 0, 0] },
+            { "file": "rival.glb", "position": [0.7, 0, -2.2], "scale": 0.7, "rotation": [0, -0.3, 0] },
+            { "file": "tsundere.glb", "position": [-0.7, 0, -2.2], "scale": 0.7, "rotation": [0, 0.3, 0] },
+            { "file": "ramen.glb", "position": [-0.5, 0.5, -1.8], "scale": 1.2, "rotation": [0, 0, 0] },
+            { "file": "school.glb", "position": [0, 0, -5], "scale": 0.5, "rotation": [0, 0, 0] },
+            { "file": "cherry-tree.glb", "position": [2, 0, -3], "scale": 1.0, "rotation": [0, 0, 0] },
+            { "file": "cherry-tree.glb", "position": [-2, 0, -3.5], "scale": 0.8, "rotation": [0, 0.5, 0] }
+          ],
+          "ambient": { "color": "#ffcc66", "intensity": 1.2 }
+        }
+      ]
     }
   ]
 }
