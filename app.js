@@ -151,6 +151,15 @@ class StoryBookApp extends xb.Script {
 
     try {
       const story = await this.generator.generateStory(theme);
+      // Register AI-generated model code
+      this.sceneRenderer.clearAIModels();
+      this.sceneRenderer.registerAIModels(story.models);
+      // Convert AI format to standard format for StoryManager
+      for (const scene of story.scenes) {
+        if (scene.objects && !scene.models) {
+          scene.models = scene.objects;
+        }
+      }
       this.storyManager.addStory(story);
       this.storyPanel.hide();
       this.startStory(story.id);
@@ -170,19 +179,18 @@ class StoryBookApp extends xb.Script {
 
     try {
       const story = await this.generator.generateStory(theme);
-      // Use first scene, then go interactive
+      this.sceneRenderer.clearAIModels();
+      this.sceneRenderer.registerAIModels(story.models);
+
       const scene = story.scenes[0];
       this.interactiveHistory = scene.text;
 
       await this.sceneRenderer.renderScene(scene);
       this.inStory = true;
 
-      // Show first scene with choices
-      this.storyPanel.showInteractive(scene.text, story.title, [
-        'Continue the adventure',
-        'Take a different path'
-      ]);
-      this.currentChoices = ['Continue the adventure', 'Take a different path'];
+      const choices = scene.choices || ['Continue the adventure', 'Take a different path'];
+      this.storyPanel.showInteractive(scene.text, story.title, choices);
+      this.currentChoices = choices;
       this.choiceIndex = 0;
       this.interactiveTitle = story.title;
       this.mode = 'choices';
@@ -199,8 +207,14 @@ class StoryBookApp extends xb.Script {
     this.storyPanel.showMessage(`Choosing: "${choice}"...`);
 
     try {
-      const scene = await this.generator.continueStory(this.interactiveHistory, choice);
+      const existingModels = Object.keys(this.sceneRenderer.aiModelCache);
+      const scene = await this.generator.continueStory(this.interactiveHistory, choice, existingModels);
       this.interactiveHistory += `\nUser chose: ${choice}\n${scene.text}`;
+
+      // Register any new models from this scene
+      if (scene.newModels) {
+        this.sceneRenderer.registerAIModels(scene.newModels);
+      }
 
       await this.sceneRenderer.renderScene(scene);
 

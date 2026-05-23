@@ -5,13 +5,61 @@ export class SceneRenderer {
   constructor(parentObject) {
     this.parent = parentObject;
     this.currentModels = [];
-    this.animations = []; // active entrance animations
+    this.animations = [];
     this.ambientLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8);
     this.parent.add(this.ambientLight);
+
+    // Cache for AI-generated model factories
+    this.aiModelCache = {};
+  }
+
+  // Register AI-generated model code (from Gemini)
+  registerAIModels(models) {
+    if (!models) return;
+    for (const [name, code] of Object.entries(models)) {
+      if (this.aiModelCache[name]) continue; // already registered
+      try {
+        this.aiModelCache[name] = new Function('THREE', code);
+      } catch (e) {
+        console.warn(`Failed to compile model "${name}":`, e.message);
+      }
+    }
+  }
+
+  // Build a model by name — checks AI cache first, then built-in procedural models
+  buildModel(name) {
+    // AI-generated model
+    if (this.aiModelCache[name]) {
+      try {
+        return this.aiModelCache[name](THREE);
+      } catch (e) {
+        console.warn(`Failed to create AI model "${name}":`, e.message);
+      }
+    }
+
+    // Built-in procedural model (for pre-written stories)
+    const builtIn = createModel(name);
+    if (builtIn) return builtIn;
+
+    // Placeholder
+    console.warn(`Unknown model: ${name}`);
+    const g = new THREE.Group();
+    const mesh = new THREE.Mesh(
+      new THREE.BoxGeometry(0.2, 0.2, 0.2),
+      new THREE.MeshStandardMaterial({ color: 0x6644aa })
+    );
+    mesh.position.y = 0.1;
+    g.add(mesh);
+    return g;
   }
 
   async renderScene(sceneData) {
     this.clearScene();
+
+    // Register any new AI models
+    if (sceneData.newModels) {
+      this.registerAIModels(sceneData.newModels);
+    }
 
     // Update ambient lighting
     if (sceneData.ambient) {
@@ -21,29 +69,31 @@ export class SceneRenderer {
       this.ambientLight.intensity = sceneData.ambient.intensity || 0.8;
     }
 
-    // Create and place models
-    for (const modelDef of sceneData.models) {
-      const model = createModel(modelDef.file);
+    // Support both "models" (pre-written) and "objects" (AI-generated) formats
+    const objectDefs = sceneData.objects || sceneData.models || [];
+
+    for (const objDef of objectDefs) {
+      const modelName = objDef.model || objDef.file;
+      if (!modelName) continue;
+
+      const model = this.buildModel(modelName);
       if (!model) continue;
 
       const wrapper = new THREE.Group();
       wrapper.add(model);
 
-      // Position
-      const pos = modelDef.position || [0, 0, -2];
+      const pos = objDef.position || [0, 0, -2];
       wrapper.position.set(pos[0], pos[1], pos[2]);
 
-      // Scale
-      const s = modelDef.scale || 1.0;
+      const s = objDef.scale || 1.0;
       const targetScale = new THREE.Vector3(s, s, s);
       wrapper.scale.set(0.01, 0.01, 0.01);
 
-      // Rotation
-      if (modelDef.rotation) {
-        wrapper.rotation.set(modelDef.rotation[0], modelDef.rotation[1], modelDef.rotation[2]);
+      if (objDef.rotation) {
+        wrapper.rotation.set(objDef.rotation[0], objDef.rotation[1], objDef.rotation[2]);
       }
 
-      // Start transparent
+      // Start transparent for fade-in
       wrapper.traverse(child => {
         if (child.isMesh) {
           child.material = child.material.clone();
@@ -55,7 +105,6 @@ export class SceneRenderer {
       this.parent.add(wrapper);
       this.currentModels.push({ wrapper, targetScale, baseY: pos[1] });
 
-      // Queue entrance animation (driven by update(), not requestAnimationFrame)
       this.animations.push({
         wrapper,
         targetScale,
@@ -65,9 +114,8 @@ export class SceneRenderer {
     }
   }
 
-  // Called every frame from app.js update() — works in both browser and WebXR
   updateAnimations(time) {
-    // Process entrance animations
+    // Entrance animations
     for (let i = this.animations.length - 1; i >= 0; i--) {
       const anim = this.animations[i];
       const elapsed = time - anim.startTime;
@@ -87,17 +135,14 @@ export class SceneRenderer {
       });
 
       if (t >= 1) {
-        // Animation complete — make fully opaque
         anim.wrapper.traverse(child => {
-          if (child.isMesh) {
-            child.material.opacity = 1;
-          }
+          if (child.isMesh) child.material.opacity = 1;
         });
         this.animations.splice(i, 1);
       }
     }
 
-    // Gentle floating bob for all models
+    // Gentle bob
     for (let i = 0; i < this.currentModels.length; i++) {
       const entry = this.currentModels[i];
       const offset = i * 1.7;
@@ -115,11 +160,14 @@ export class SceneRenderer {
           if (child.material?.map) child.material.map.dispose();
           child.material?.dispose();
         }
-        if (child.isLight) {
-          child.dispose?.();
-        }
+        if (child.isLight) child.dispose?.();
       });
     }
     this.currentModels = [];
+  }
+
+  // Clear AI model cache (when starting a new story)
+  clearAIModels() {
+    this.aiModelCache = {};
   }
 }
